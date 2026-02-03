@@ -14,6 +14,14 @@ class Watcher:
         self.cap = None
         self.frame_index = 0
 
+        # True -> Pisca / False -> Não pisca
+        self.blink_mode  = False
+        self.blink_interval = 1.5  # tempo entre piscadas
+        self.blink_duration = 0.5  # tempo da piscada
+        self.last_blink_time = 0.0
+        self.blink_start = 0.0
+        self.blinking = False
+
     def start(self):
         self.cap = cv2.VideoCapture(self.cam_index)
 
@@ -38,6 +46,23 @@ class Watcher:
                 break
 
             self.frame_index += 1
+            now = time.perf_counter()
+
+            # -------------------------------
+            # MODO DE DESEMPENHO (PISCADA)
+            # -------------------------------
+            if self.blink_mode:
+                self._update_blink_state(now)
+
+                if self.blinking:
+                    cv2.imshow("YOLO Watcher", frame)
+
+                    if cv2.waitKey(1) & 0xFF == 27:
+                        print("Encerrando watcher.")
+                        break
+
+                    continue  # pula para o próximo frame
+            # -------------------------------
 
             # ---- Benchmark da inferência ----
             t0 = time.perf_counter()
@@ -47,7 +72,7 @@ class Watcher:
             infer_time_ms = (t1 - t0) * 1000
             # --------------------------------
 
-            # Registra benchmark
+            # Registra benchmark (somente quando houve inferência)
             self.benchmark.record(
                 frame_index=self.frame_index,
                 infer_time_ms=infer_time_ms,
@@ -80,3 +105,13 @@ class Watcher:
         print("\n=== RESUMO DO BENCHMARK ===")
         for k, v in summary.items():
             print(f"{k}: {v}")
+
+    def _update_blink_state(self, now: float):
+        if not self.blinking:
+            if now - self.last_blink_time >= self.blink_interval:
+                self.blinking = True
+                self.blink_start = now
+        else:
+            if now - self.blink_start >= self.blink_duration:
+                self.blinking = False
+                self.last_blink_time = now
