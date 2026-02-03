@@ -1,3 +1,4 @@
+from frame_gate import FrameGate
 from enum import Enum
 
 class InferenceMode(Enum):
@@ -15,7 +16,8 @@ class Inference:
         self.mode = ''
         self.blinking = False
 
-        self.sleep_time = 0.5
+        self.sleep_time = 0.2
+        self.gate = FrameGate(threshold=0.015, downscale=32)
 
         # ----- blink adaptativo -----
         self.blink_cycle_interval = 10.0
@@ -29,7 +31,7 @@ class Inference:
     def get_sleep_time(self):
         return self.sleep_time
 
-    def can_infer(self, now: float) -> bool:
+    def can_infer(self, now: float, frame=None) -> bool:
         if self.mode == InferenceMode.CONTINUOUS:
             return True
 
@@ -37,6 +39,7 @@ class Inference:
             return self._can_infer_blink_fixed(now)
 
         if self.mode == InferenceMode.TIMELESS_BLINK:
+            if frame is None: return True
             return self._can_infer_blink_adaptive(now)
 
         return True
@@ -53,27 +56,8 @@ class Inference:
 
         return not self.blinking
 
-    def _can_infer_blink_adaptive(self, now: float) -> bool:
-        # Início de um novo ciclo de piscada
-        if not self.in_adaptive_blink:
-            if now - self.last_blink_cycle >= self.blink_cycle_interval:
-                self.in_adaptive_blink = True
-                self.delay_index = 0
-                self.next_infer_time = now + self.infer_delays[0]
-                return False
+    def _can_infer_blink_adaptive(self, frame) -> bool:
+        if frame is None:
             return True
 
-        # Dentro do ciclo adaptativo
-        if now < self.next_infer_time:
-            return False
-
-        delay = self.infer_delays[min(self.delay_index, len(self.infer_delays) - 1)]
-        self.delay_index += 1
-
-        if delay == 0.0:
-            self.in_adaptive_blink = False
-            self.last_blink_cycle = now
-        else:
-            self.next_infer_time = now + delay
-
-        return True
+        return self.gate.should_process(frame)
