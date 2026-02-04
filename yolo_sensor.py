@@ -16,7 +16,8 @@ class YoloSensor:
 
     #   retorna frame com boxes desenhadas e lista de detecções
     def infer_draw(self, frame):
-        raw_result = self.model(frame, verbose=False)
+        # classes=[0] para capturar apenas as pessoas
+        raw_result = self.model(frame,  classes=[0] ,verbose=False, conf=0.8)
         detections = self._parse_results(raw_result)
 
         for det in detections:
@@ -24,7 +25,7 @@ class YoloSensor:
             label = str(class_id)
             cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
             cv2.putText(frame, f"{label} {score:.2f}", (int(x1), int(y1)-5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
         return frame, detections
 
