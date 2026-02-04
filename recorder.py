@@ -29,7 +29,7 @@ class Recorder:
     def start(self):
         self.start_time = time.perf_counter()
 
-    def record(self, frame_index: int, infer_time_ms: float, detections: list, mode_name: str, infra_mode: str):
+    def record(self, frame_index: int, infer_time_ms: float, detections: list, mode_name: str, infra_mode: str, show_display: bool):
         has_person = False
         if detections:
             has_person = any(int(det[0]) == 0 for det in detections)
@@ -44,6 +44,7 @@ class Recorder:
             "mode": mode_name,
             "infra": infra_mode,
             "hw_fps": round(hw_fps, 2),
+            "display": show_display,
             "timestamp": time.perf_counter()
         })
     def stop(self):

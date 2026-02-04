@@ -76,9 +76,9 @@ class Watcher:
 
                 infer_time_ms = (t_end - t_start) * 1000
 
-                self.recorder.record(frame_index, infer_time_ms, detections, current_mode_name,infra_name)
+                self.recorder.record(frame_index, infer_time_ms, detections, current_mode_name,infra_name,self.show_display)
             else:
-                self.recorder.record(frame_index, 0, [], current_mode_name,infra_name)
+                self.recorder.record(frame_index, 0, [], current_mode_name,infra_name,self.show_display)
                 last_detections = []
                 time.sleep(self.inference.get_sleep_time())
 
